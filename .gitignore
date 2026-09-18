@@ -219,3 +219,9 @@ __marimo__/
 
 # Datasets
 /data/
+
+# Ignore Task 1 output results, metrics, and plots
+task1/results/
+
+# Ignore generated cue conflict images
+task1/data/cue_conflicts/
