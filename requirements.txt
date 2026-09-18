@@ -1,0 +1,14 @@
+# PyTorch Core & Vision
+torch>=2.0.0
+torchvision>=0.15.0
+
+# Array Math & Machine Learning
+numpy>=1.21.0
+scikit-learn>=1.0.0
+
+# Visualization
+matplotlib>=3.5.0
+
+# Task 1 Specific Dependencies
+open_clip_torch>=2.20.0
+umap-learn>=0.5.3

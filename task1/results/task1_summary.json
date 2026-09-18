@@ -1,0 +1,23 @@
+{
+  "ResNet-50": {
+    "clean_acc": 0.28125,
+    "clean_macro_f1": 0.20714285714285713,
+    "gray_acc_drop": 0.0625,
+    "gray_consistency": 0.375,
+    "gray_cosine_stability": 0.7817205786705017
+  },
+  "ViT-B/16": {
+    "clean_acc": 0.25,
+    "clean_macro_f1": 0.21801587301587305,
+    "gray_acc_drop": 0.0625,
+    "gray_consistency": 0.59375,
+    "gray_cosine_stability": 0.7560014724731445
+  },
+  "CLIP-ViT-B/32": {
+    "clean_acc": 0.15625,
+    "clean_macro_f1": 0.09816053511705686,
+    "gray_acc_drop": 0.0,
+    "gray_consistency": 0.71875,
+    "gray_cosine_stability": 0.9039207696914673
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "ResNet-50_head": {
+    "n_total_accepted": 2,
+    "n_shape": 1,
+    "n_texture": 0,
+    "n_other": 1,
+    "shape_bias_percent": 100.0,
+    "coverage_percent": 50.0
+  },
+  "ViT-B/16_head": {
+    "n_total_accepted": 2,
+    "n_shape": 0,
+    "n_texture": 1,
+    "n_other": 1,
+    "shape_bias_percent": 0.0,
+    "coverage_percent": 50.0
+  },
+  "CLIP-ViT-B/32_head": {
+    "n_total_accepted": 2,
+    "n_shape": 1,
+    "n_texture": 0,
+    "n_other": 1,
+    "shape_bias_percent": 100.0,
+    "coverage_percent": 50.0
+  },
+  "CLIP-ViT-B/32_zeroshot": {
+    "n_total_accepted": 2,
+    "n_shape": 1,
+    "n_texture": 0,
+    "n_other": 1,
+    "shape_bias_percent": 100.0,
+    "coverage_percent": 50.0
+  }
+}

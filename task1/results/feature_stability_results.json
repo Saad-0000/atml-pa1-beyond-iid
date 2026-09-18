@@ -1,0 +1,20 @@
+{
+  "ResNet-50": {
+    "cosine_stability_grayscale": 0.7817205786705017,
+    "cosine_stability_hue_rotation": 0.8143023252487183,
+    "cosine_stability_translation_32px": 0.9276055693626404,
+    "cosine_stability_patch_shuffle": 0.050415147095918655
+  },
+  "ViT-B/16": {
+    "cosine_stability_grayscale": 0.7560014724731445,
+    "cosine_stability_hue_rotation": 0.6965763568878174,
+    "cosine_stability_translation_32px": 0.9461296796798706,
+    "cosine_stability_patch_shuffle": 0.0035627831239253283
+  },
+  "CLIP-ViT-B/32": {
+    "cosine_stability_grayscale": 0.9039207696914673,
+    "cosine_stability_hue_rotation": 0.8993136286735535,
+    "cosine_stability_translation_32px": 0.9620046019554138,
+    "cosine_stability_patch_shuffle": 0.5166338682174683
+  }
+}
