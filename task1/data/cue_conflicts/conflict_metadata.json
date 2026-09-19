@@ -1,14 +1,14 @@
 {
-  "conflict_000_bird-shape_airplane-texture.jpg": {
+  "conflict_000_bird-shape_car-texture.jpg": {
     "shape_class": "bird",
-    "texture_class": "airplane",
-    "shape_idx": 1,
-    "texture_idx": 0
-  },
-  "conflict_001_dog-shape_car-texture.jpg": {
-    "shape_class": "dog",
     "texture_class": "car",
-    "shape_idx": 5,
+    "shape_idx": 1,
     "texture_idx": 2
+  },
+  "conflict_001_truck-shape_horse-texture.jpg": {
+    "shape_class": "truck",
+    "texture_class": "horse",
+    "shape_idx": 9,
+    "texture_idx": 6
   }
 }

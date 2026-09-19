@@ -19,7 +19,7 @@ TRAIN_VAL_SPLIT_RATIO = 0.20
 TEST_SUBSET_SIZE = 500
 
 # Laptop Testing / Quick Debugging
-SMOKE_TEST = False  # Set to True to use small subsets and limit batch passes
+SMOKE_TEST = True  # Set to True to use small subsets and limit batch passes
 SMOKE_TEST_SAMPLES = 50
 MAX_TRAIN_BATCHES = 2  # Used when SMOKE_TEST = True
 MAX_VAL_BATCHES = 2  # Used when SMOKE_TEST = True

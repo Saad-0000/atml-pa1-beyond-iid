@@ -41,7 +41,7 @@ class VGGFeatures(nn.Module):
 def gram_matrix(tensor):
     _, d, h, w = tensor.size()
     tensor = tensor.view(d, h * w)
-    gram = torch.mm(tensor, tensor.t())
+    gram = torch.mm(tensor, tensor.t()) / (d * h * w)
     return gram
 
 
@@ -49,16 +49,20 @@ def run_style_transfer(vgg, content_img, style_img, device, num_steps=200):
     """Optimizes a stylized image from a content (shape) and style (texture) target."""
     target = content_img.clone().requires_grad_(True).to(device)
     optimizer = optim.Adam([target], lr=0.05)
+    vgg_norm = T.Normalize(
+        mean=[0.485, 0.456, 0.406],
+        std=[0.229, 0.224, 0.225],
+    )
 
-    content_features = vgg(content_img.to(device))['content']
-    style_features = vgg(style_img.to(device))['style']
+    content_features = vgg(vgg_norm(content_img.to(device)))['content']
+    style_features = vgg(vgg_norm(style_img.to(device)))['style']
     style_grams = {layer: gram_matrix(style_features[layer]) for layer in style_features}
 
-    style_weight = 1e6
+    style_weight = 1e4
     content_weight = 1
 
     for step in range(num_steps):
-        target_features = vgg(target)
+        target_features = vgg(vgg_norm(target))
         
         # Content Loss
         content_loss = F.mse_loss(target_features['content']['conv4_2'], content_features['conv4_2'])
@@ -68,8 +72,7 @@ def run_style_transfer(vgg, content_img, style_img, device, num_steps=200):
         for layer in target_features['style']:
             target_gram = gram_matrix(target_features['style'][layer])
             style_gram = style_grams[layer]
-            b, c, h, w = target_features['style'][layer].shape
-            style_loss += F.mse_loss(target_gram, style_gram) / (c * h * w)
+            style_loss += F.mse_loss(target_gram, style_gram)
 
         loss = content_weight * content_loss + style_weight * style_loss
         
@@ -110,25 +113,49 @@ def main():
     
     # Required class pairs for conflict generation
     pairs = [
-        ("airplane", "bird"),
-        ("car", "dog"),
-        ("ship", "truck"),
-        ("horse", "cat"),
-        ("deer", "car")
+        ("car", "bird"),
+        ("truck", "horse"),
+        ("ship", "cat"),
+        ("horse", "airplane"),
+        ("ship", "dog")
     ]
 
-    # Organize images by class for sampling
-    images_by_class = {c: [] for c in classes}
-    for i in range(len(dataset)):
-        img, label = dataset[i]
-        images_by_class[classes[label]].append(img)
-        # To speed up indexing, only sample the first 50 per class
-        if len(images_by_class[classes[label]]) >= 50:
-            continue
+    # Curated source images selected from STL-10 contact sheets.
+    curated_indices = {
+        "airplane": [2904, 6407, 7145, 5267, 248, 4993, 1643, 6420],
+        "bird": [2673, 6172, 4111, 4007, 6821, 5771, 119, 140],
+        "car": [1827, 5028, 224, 1056, 7905, 2159, 4217, 7632],
+        "cat": [509, 2775, 4818, 2961, 4241, 2890, 3546, 2857],
+        "deer": [5469, 4454, 7690, 6828, 6036, 4273, 4199],
+        "dog": [568, 451, 7631, 7536, 138, 2791, 5366],
+        "horse": [6203, 6124, 2003, 7042, 2254, 7075, 7211],
+        "ship": [1614, 1093, 3691, 4374, 4699, 7323, 3250],
+        "truck": [7047, 5182, 4930, 2535, 7131, 1332, 7383, 4127],
+    }
+
+    required_classes = {class_name for pair in pairs for class_name in pair}
+    missing_classes = required_classes - curated_indices.keys()
+    if missing_classes:
+        raise ValueError(
+            f"Missing curated source images for: {sorted(missing_classes)}"
+        )
+
+    # Load only the selected source images and verify their labels.
+    images_by_class = {}
+    for class_name, indices in curated_indices.items():
+        images_by_class[class_name] = []
+        for index in indices:
+            img, label = dataset[index]
+            if classes[label] != class_name:
+                raise ValueError(
+                    f"Dataset index {index} is labelled {classes[label]}, "
+                    f"not {class_name}."
+                )
+            images_by_class[class_name].append(img)
 
     total_images = 2 if args.smoke_test else 200
     images_per_pair = max(1, total_images // len(pairs))
-    opt_steps = 10 if args.smoke_test else 150
+    opt_steps = 200 if args.smoke_test else 400
 
     metadata = {}
     image_counter = 0
