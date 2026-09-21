@@ -1,0 +1,4 @@
+inherit: base.yaml
+method: dan
+param_val: 1.0
+# Controlled study: [0.1, 1.0, 10.0]

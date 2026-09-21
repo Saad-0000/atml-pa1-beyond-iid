@@ -5,6 +5,8 @@ torchvision>=0.15.0
 # Array Math & Machine Learning
 numpy>=1.21.0
 scikit-learn>=1.0.0
+pandas>=1.5.0
+PyYAML>=6.0
 
 # Visualization
 matplotlib>=3.5.0

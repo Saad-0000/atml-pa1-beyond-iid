@@ -1,0 +1,4 @@
+inherit: base.yaml
+method: dann
+param_val: 1.0
+# Controlled study: [0.25, 0.5, 1.0]
