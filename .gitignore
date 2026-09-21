@@ -225,3 +225,5 @@ task1/results/
 
 # Ignore generated cue conflict images
 task1/data/cue_conflicts/
+
+splits/*.json

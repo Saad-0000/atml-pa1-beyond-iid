@@ -98,6 +98,12 @@ def train_task2(method_name, data_root, save_dir, param_val=1.0, seed=6304,
                 steps_per_epoch=None, split_json="splits/pacs_sketch_seed6304.json"):
     torch.manual_seed(seed)
     np.random.seed(seed)
+
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
+
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
     if max_epochs < 1:
         raise ValueError("max_epochs must be at least 1")
     if patience < 1:
