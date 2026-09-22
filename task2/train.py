@@ -568,15 +568,18 @@ def train_task2(
             # Print first step of every epoch
             # -------------------------------------------------
 
-            if step == 0:
 
+            if step == 0:
                 print(
-                    f"  Step {step + 1:03d} | "
-                    f"Cls: {logs.get('cls_loss', 0.0):.4f} | "
-                    f"Domain: {logs.get('domain_loss', 0.0):.4f} | "
+                    f"Step {step+1:03d} | "
+                    f"Cls: {logs.get('cls_loss', 0):.4f} | "
+                    f"Domain: {logs.get('domain_loss', 0):.4f} | "
                     f"Total: {logs['total_loss']:.4f} | "
-                    f"Alpha: {logs.get('alpha', 0.0):.4f} | "
-                    f"GradNorm: {grad_norm_before_clip:.4f}"
+                    f"Alpha: {logs.get('alpha', 0):.4f} | "
+                    f"Grad: {grad_norm_before_clip:.2f} | "
+                    f"FeatS: {logs.get('feat_s_norm', 0):.2f} | "
+                    f"FeatT: {logs.get('feat_t_norm', 0):.2f} | "
+                    f"Logit: {logs.get('domain_logit_mean', 0):.2f}"
                 )
 
             curr_step += 1
@@ -641,15 +644,14 @@ def train_task2(
         # Epoch output
         # -----------------------------------------------------
 
-        print()
         print(
-            f"Epoch {epoch + 1:02d}/{max_epochs:02d} | "
+            f"Epoch {epoch+1:02d}/{max_epochs:02d} | "
             f"Loss: {avg_loss:.4f} | "
             f"Cls: {avg_cls_loss:.4f} | "
             f"Domain: {avg_domain_loss:.4f} | "
             f"Alpha: {avg_alpha:.4f} | "
-            f"GradNorm: {avg_grad_norm:.4f} | "
-            f"Src Val Macro-F1: {mean_val_f1:.2f}%"
+            f"Grad: {avg_grad_norm:.2f} | "
+            f"F1: {mean_val_f1:.2f}%"
         )
 
         # -----------------------------------------------------
