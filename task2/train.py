@@ -336,9 +336,10 @@ def train_task2(
     # Optimizer
     # ---------------------------------------------------------
 
-    optimizer = optim.AdamW(
+    optimizer = optim.SGD(
         model.parameters(),
         lr=lr,
+        momentum=0.9,
         weight_decay=weight_decay,
     )
 

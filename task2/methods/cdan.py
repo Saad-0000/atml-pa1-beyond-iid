@@ -24,8 +24,8 @@ class CDANModel(nn.Module):
         logits_t = self.classifier(feat_t)
         cls_loss = self.cls_criterion(logits_s, y_s)
 
-        prob_s = torch.softmax(logits_s, dim=1)
-        prob_t = torch.softmax(logits_t, dim=1)
+        prob_s = torch.softmax(logits_s, dim=1).detach()
+        prob_t = torch.softmax(logits_t, dim=1).detach()
 
         # Multilinear Conditioning: g(x) = vec(f (x) p)
         # B x 512 x 1, B x 1 x 7 -> B x 512 x 7 -> B x 3584
