@@ -1,4 +1,7 @@
 import argparse
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 import torch
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
