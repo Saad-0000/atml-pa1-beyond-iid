@@ -32,22 +32,22 @@ class VGGFeatures(nn.Module):
         for name, layer in self.model._modules.items():
             x = layer(x)
             if name in self.content_layers:
-                features['content'][self.content_layers[name]] = x
+                features['content'][self.content_layers[name]] = x.clone()
             if name in self.style_layers:
-                features['style'][self.style_layers[name]] = x
+                features['style'][self.style_layers[name]] = x.clone()
         return features
 
 
 def gram_matrix(tensor):
-    _, d, h, w = tensor.size()
-    tensor = tensor.view(d, h * w)
+    b, d, h, w = tensor.size()
+    tensor = tensor.view(b * d, h * w)
     gram = torch.mm(tensor, tensor.t()) / (d * h * w)
     return gram
 
 
 def run_style_transfer(vgg, content_img, style_img, device, num_steps=200):
     """Optimizes a stylized image from a content (shape) and style (texture) target."""
-    target = content_img.clone().requires_grad_(True).to(device)
+    target = content_img.to(device).clone().requires_grad_(True)
     optimizer = optim.Adam([target], lr=0.05)
     vgg_norm = T.Normalize(
         mean=[0.485, 0.456, 0.406],
@@ -82,7 +82,7 @@ def run_style_transfer(vgg, content_img, style_img, device, num_steps=200):
 
         # Keep image in valid float range [0, 1]
         with torch.no_grad():
-            target.clamp_(0, 1)
+            target.data.clamp_(0, 1)
 
     return target.detach()
 
