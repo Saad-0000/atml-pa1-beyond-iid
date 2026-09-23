@@ -49,5 +49,29 @@ def evaluate_target():
     print(f"Sketch Target Results for {args.checkpoint}:")
     print(f"Accuracy: {acc:.4f} | Macro-F1: {f1:.4f}")
 
+    # Save results to a file
+    import json
+    results_file = "task3/results/sketch_results.json"
+    
+    # Load existing results if they exist to append
+    if os.path.exists(results_file):
+        with open(results_file, 'r') as f:
+            try:
+                results_data = json.load(f)
+            except json.JSONDecodeError:
+                results_data = {}
+    else:
+        results_data = {}
+        
+    method_name = os.path.basename(args.checkpoint).replace('_checkpoint.pth', '')
+    results_data[method_name] = {
+        "Accuracy": float(acc),
+        "Macro-F1": float(f1)
+    }
+    
+    with open(results_file, 'w') as f:
+        json.dump(results_data, f, indent=4)
+    print(f"Results saved to {results_file}")
+
 if __name__ == '__main__':
     evaluate_target()

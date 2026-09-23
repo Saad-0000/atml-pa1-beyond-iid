@@ -52,7 +52,7 @@ def main():
     train_datasets = []
     
     for i, d in enumerate(source_domains):
-        ds = PACSDataset(splits["source"][d]["train"], transform=train_tf)
+        ds = PACSDataset(splits["sources"][d]["train"], transform=train_tf)
         train_datasets.append(PACSDGDataset(ds, i))
         
     dataset = ConcatDataset(train_datasets)
@@ -115,6 +115,7 @@ def main():
 
         print(f"Epoch {epoch+1}/{max_epochs} Complete. Method: {method}")
 
+    os.makedirs('task3/results', exist_ok=True)
     torch.save({
         'backbone': backbone.state_dict(),
         'classifier': classifier.state_dict()
