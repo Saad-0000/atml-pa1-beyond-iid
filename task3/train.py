@@ -6,6 +6,8 @@ import yaml
 import torch
 import torch.nn as nn
 import copy
+import csv
+from sklearn.metrics import f1_score
 from torch.utils.data import DataLoader, ConcatDataset
 
 from shared.pacs import PACSDataset, get_pacs_transforms
@@ -30,6 +32,8 @@ def get_args():
     parser.add_argument('--config', type=str, required=True, help='Path to YAML config file')
     parser.add_argument('--data_root', type=str, required=True, help='Path to PACS dataset')
     parser.add_argument('--debug', action='store_true', help='Run short pipeline for local testing')
+    parser.add_argument('--lambda_dg', type=float, default=None, help='Override lambda_dg from config')
+    parser.add_argument('--rho', type=float, default=None, help='Override rho from config')
     return parser.parse_args()
 
 def main():
@@ -45,18 +49,29 @@ def main():
     batch_size = config['batch_size'] 
     max_epochs = 1 if args.debug else config['max_epochs'] 
     
-    train_tf, _ = get_pacs_transforms()
+    # Overrides
+    if args.lambda_dg is not None: config['lambda_dg'] = args.lambda_dg
+    if args.rho is not None: config['rho'] = args.rho
+    
+    train_tf, test_tf = get_pacs_transforms()
     splits = create_or_load_pacs_splits(args.data_root)
 
     source_domains = ["photo", "art_painting", "cartoon"]
     train_datasets = []
+    val_datasets = []
     
     for i, d in enumerate(source_domains):
-        ds = PACSDataset(splits["sources"][d]["train"], transform=train_tf)
-        train_datasets.append(PACSDGDataset(ds, i))
+        ds_train = PACSDataset(splits["sources"][d]["train"], transform=train_tf)
+        train_datasets.append(PACSDGDataset(ds_train, i))
+        
+        ds_val = PACSDataset(splits["sources"][d]["val"], transform=test_tf)
+        val_datasets.append(PACSDGDataset(ds_val, i))
         
     dataset = ConcatDataset(train_datasets)
     loader = DataLoader(dataset, batch_size=batch_size, shuffle=True, drop_last=True) 
+    
+    val_dataset = ConcatDataset(val_datasets)
+    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
 
     backbone = FrozenBNResNet18().to(device)
     classifier = ClassifierHead().to(device)
@@ -78,6 +93,13 @@ def main():
             lr=config['learning_rate'], 
             weight_decay=config['weight_decay']
         )
+
+    os.makedirs('task3/results', exist_ok=True)
+    csv_file = open(f'task3/results/{method}_training_log.csv', mode='w', newline='')
+    csv_writer = csv.writer(csv_file)
+    csv_writer.writerow(['Epoch', 'Cls_Loss', 'MMD_Loss', 'Total_Loss', 'Train_Acc', 'Val_Macro_F1'])
+    
+    best_val_f1 = 0.0
 
     for epoch in range(max_epochs):
         backbone.train()
@@ -132,7 +154,6 @@ def main():
             total += labels.size(0)
                 
             if args.debug and batch_idx >= 1: 
-                print("Debug mode: stopping epoch early.")
                 break 
 
         # Compute averages
@@ -140,19 +161,44 @@ def main():
         avg_cls_loss = total_cls_loss / len(loader)
         train_acc = 100. * correct / total
         
-        metrics_str = f"Epoch {epoch+1:02d}/{max_epochs} [{method}] | Acc: {train_acc:.2f}% | Cls Loss: {avg_cls_loss:.4f}"
+        # Validation
+        backbone.eval()
+        classifier.eval()
+        val_preds, val_labels = [], []
+        with torch.no_grad():
+            for images, labels, _ in val_loader:
+                logits = classifier(backbone(images.to(device)))
+                val_preds.extend(torch.argmax(logits, dim=1).cpu().numpy())
+                val_labels.extend(labels.numpy())
+                if args.debug: break
+                
+        val_f1 = f1_score(val_labels, val_preds, average='macro')
+        
+        if val_f1 > best_val_f1:
+            best_val_f1 = val_f1
+            torch.save({
+                'backbone': backbone.state_dict(),
+                'classifier': classifier.state_dict()
+            }, f'task3/results/{method}_best_checkpoint.pth')
+        
+        avg_mmd_loss = (total_mmd_loss / len(loader)) if method == 'dan_dg' else 0.0
+        csv_writer.writerow([epoch+1, avg_cls_loss, avg_mmd_loss, avg_loss, train_acc, val_f1])
+        csv_file.flush()
+        
+        metrics_str = f"Epoch {epoch+1:02d}/{max_epochs} [{method}] | Acc: {train_acc:.2f}% | Cls Loss: {avg_cls_loss:.4f} | Val F1: {val_f1:.4f}"
         if method == 'dan_dg':
-            avg_mmd_loss = total_mmd_loss / len(loader)
             metrics_str += f" | MMD Loss: {avg_mmd_loss:.4f} | Total Loss: {avg_loss:.4f}"
             
         print(metrics_str)
 
-    os.makedirs('task3/results', exist_ok=True)
+    csv_file.close()
+    
+    # Save final model as well
     torch.save({
         'backbone': backbone.state_dict(),
         'classifier': classifier.state_dict()
-    }, f'task3/results/{method}_checkpoint.pth')
-    print(f"Saved {method} to task3/results/")
+    }, f'task3/results/{method}_final_checkpoint.pth')
+    print(f"Saved {method} best and final checkpoints to task3/results/")
 
 if __name__ == '__main__':
     main()

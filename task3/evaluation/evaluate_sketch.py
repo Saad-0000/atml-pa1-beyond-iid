@@ -46,11 +46,27 @@ def evaluate_target():
     acc = accuracy_score(all_labels, all_preds)
     f1 = f1_score(all_labels, all_preds, average='macro')
     
+    from sklearn.metrics import classification_report
+    from shared.pacs import PACS_CLASSES
+    import json
+    
+    report = classification_report(all_labels, all_preds, target_names=PACS_CLASSES, output_dict=True)
+    
     print(f"Sketch Target Results for {args.checkpoint}:")
     print(f"Accuracy: {acc:.4f} | Macro-F1: {f1:.4f}")
 
+    # Track Failure cases
+    failures = []
+    for i in range(len(all_labels)):
+        if all_labels[i] != all_preds[i]:
+            img_path = dataset.samples[i][0]
+            failures.append({
+                "path": img_path,
+                "true_class": PACS_CLASSES[all_labels[i]],
+                "pred_class": PACS_CLASSES[all_preds[i]]
+            })
+
     # Save results to a file
-    import json
     results_file = "task3/results/sketch_results.json"
     
     # Load existing results if they exist to append
@@ -66,12 +82,19 @@ def evaluate_target():
     method_name = os.path.basename(args.checkpoint).replace('_checkpoint.pth', '')
     results_data[method_name] = {
         "Accuracy": float(acc),
-        "Macro-F1": float(f1)
+        "Macro-F1": float(f1),
+        "Per-Class": report
     }
     
     with open(results_file, 'w') as f:
         json.dump(results_data, f, indent=4)
+        
+    failures_file = f"task3/results/sketch_failures_{method_name}.json"
+    with open(failures_file, 'w') as f:
+        json.dump(failures, f, indent=4)
+        
     print(f"Results saved to {results_file}")
+    print(f"Failure cases saved to {failures_file}")
 
 if __name__ == '__main__':
     evaluate_target()
