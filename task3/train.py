@@ -83,21 +83,33 @@ def main():
         backbone.train()
         classifier.train()
         
+        total_loss = 0.0
+        total_cls_loss = 0.0
+        total_mmd_loss = 0.0
+        correct = 0
+        total = 0
+        
         for batch_idx, (images, labels, domains) in enumerate(loader):
             images, labels, domains = images.to(device), labels.to(device), domains.to(device)
 
             if method == 'sam':
                 features = backbone(images)
-                loss = criterion(classifier(features), labels)
+                logits = classifier(features)
+                loss = criterion(logits, labels)
+                
                 loss.backward()
                 optimizer.first_step(zero_grad=True)
                 
                 criterion(classifier(backbone(images)), labels).backward()
                 optimizer.second_step(zero_grad=True)
+                
+                cls_loss = loss
+                mmd_loss = torch.tensor(0.0)
             else:
                 optimizer.zero_grad()
                 features = backbone(images)
-                cls_loss = criterion(classifier(features), labels)
+                logits = classifier(features)
+                cls_loss = criterion(logits, labels)
                 
                 if method == 'dan_dg':
                     lambda_dg = config.get('lambda_dg', 1.0)
@@ -105,15 +117,35 @@ def main():
                     loss = cls_loss + mmd_loss
                 else:
                     loss = cls_loss 
+                    mmd_loss = torch.tensor(0.0)
                     
                 loss.backward()
                 optimizer.step()
+                
+            # Track metrics
+            total_loss += loss.item()
+            total_cls_loss += cls_loss.item()
+            total_mmd_loss += mmd_loss.item() if method == 'dan_dg' else 0.0
+            
+            preds = torch.argmax(logits, dim=1)
+            correct += (preds == labels).sum().item()
+            total += labels.size(0)
                 
             if args.debug and batch_idx >= 1: 
                 print("Debug mode: stopping epoch early.")
                 break 
 
-        print(f"Epoch {epoch+1}/{max_epochs} Complete. Method: {method}")
+        # Compute averages
+        avg_loss = total_loss / len(loader)
+        avg_cls_loss = total_cls_loss / len(loader)
+        train_acc = 100. * correct / total
+        
+        metrics_str = f"Epoch {epoch+1:02d}/{max_epochs} [{method}] | Acc: {train_acc:.2f}% | Cls Loss: {avg_cls_loss:.4f}"
+        if method == 'dan_dg':
+            avg_mmd_loss = total_mmd_loss / len(loader)
+            metrics_str += f" | MMD Loss: {avg_mmd_loss:.4f} | Total Loss: {avg_loss:.4f}"
+            
+        print(metrics_str)
 
     os.makedirs('task3/results', exist_ok=True)
     torch.save({
