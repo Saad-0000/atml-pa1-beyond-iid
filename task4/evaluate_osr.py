@@ -131,33 +131,39 @@ def main():
                    compute_mls(v_val_log), compute_mls(v_near_log), compute_mls(v_far_log))
     
     # GCSC (MLS)
-    gcsc = CIFARResNet18(num_classes=10).to(device)
-    gcsc.load_state_dict(torch.load('task4/results/gcsc_best.pth'))
-    g_val_log, _, _ = extract_outputs(gcsc, val_loader, device)
-    g_test_log, _, g_test_lbl = extract_outputs(gcsc, test_loader, device)
-    g_near_log, _, _ = extract_outputs(gcsc, near_loader, device)
-    g_far_log, _, _ = extract_outputs(gcsc, far_loader, device)
-    
-    add_model_eval('GCSC', compute_csa(g_test_log, g_test_lbl), 
-                   compute_mls(g_val_log), compute_mls(g_near_log), compute_mls(g_far_log))
+    if os.path.exists('task4/results/gcsc_best.pth'):
+        gcsc = CIFARResNet18(num_classes=10).to(device)
+        gcsc.load_state_dict(torch.load('task4/results/gcsc_best.pth'))
+        g_val_log, _, _ = extract_outputs(gcsc, val_loader, device)
+        g_test_log, _, g_test_lbl = extract_outputs(gcsc, test_loader, device)
+        g_near_log, _, _ = extract_outputs(gcsc, near_loader, device)
+        g_far_log, _, _ = extract_outputs(gcsc, far_loader, device)
+        
+        add_model_eval('GCSC', compute_csa(g_test_log, g_test_lbl), 
+                       compute_mls(g_val_log), compute_mls(g_near_log), compute_mls(g_far_log))
+    else:
+        print("Skipping GCSC evaluation (checkpoint not found).")
     
     # PROSER (MLS & Placeholder Score)
-    proser = CIFARResNet18(num_classes=15).to(device)
-    proser.load_state_dict(torch.load('task4/results/proser_best.pth'))
-    p_val_log, _, _ = extract_outputs(proser, val_loader, device)
-    p_test_log, _, p_test_lbl = extract_outputs(proser, test_loader, device)
-    p_near_log, _, _ = extract_outputs(proser, near_loader, device)
-    p_far_log, _, _ = extract_outputs(proser, far_loader, device)
-    
-    p_csa = compute_csa(p_test_log, p_test_lbl)
-    
-    # PROSER using standard MLS (on known 10 classes only)[cite: 2]
-    add_model_eval('PROSER', p_csa, 
-                   compute_mls(p_val_log[:, :10]), compute_mls(p_near_log[:, :10]), compute_mls(p_far_log[:, :10]))
-                   
-    # PROSER using Placeholder-based detection score[cite: 2]
-    add_model_eval('PROSER', p_csa, 
-                   compute_proser_score(p_val_log), compute_proser_score(p_near_log), compute_proser_score(p_far_log), score_name="Placeholder")
+    if os.path.exists('task4/results/proser_best.pth'):
+        proser = CIFARResNet18(num_classes=15).to(device)
+        proser.load_state_dict(torch.load('task4/results/proser_best.pth'))
+        p_val_log, _, _ = extract_outputs(proser, val_loader, device)
+        p_test_log, _, p_test_lbl = extract_outputs(proser, test_loader, device)
+        p_near_log, _, _ = extract_outputs(proser, near_loader, device)
+        p_far_log, _, _ = extract_outputs(proser, far_loader, device)
+        
+        p_csa = compute_csa(p_test_log, p_test_lbl)
+        
+        # PROSER using standard MLS (on known 10 classes only)[cite: 2]
+        add_model_eval('PROSER', p_csa, 
+                       compute_mls(p_val_log[:, :10]), compute_mls(p_near_log[:, :10]), compute_mls(p_far_log[:, :10]))
+                       
+        # PROSER using Placeholder-based detection score[cite: 2]
+        add_model_eval('PROSER', p_csa, 
+                       compute_proser_score(p_val_log), compute_proser_score(p_near_log), compute_proser_score(p_far_log), score_name="Placeholder")
+    else:
+        print("Skipping PROSER evaluation (checkpoint not found).")
 
     pd.DataFrame(table2).to_csv('task4/results/table2_model_comparison.csv', index=False)
 
