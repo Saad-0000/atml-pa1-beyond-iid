@@ -28,9 +28,9 @@ def get_dataloaders(batch_size, method='vanilla'):
     targets = cifar10_full.targets
     train_idx, val_idx = train_test_split(np.arange(len(targets)), test_size=0.1, stratify=targets, random_state=6304)
     
-    train_loader = DataLoader(Subset(cifar10_full, train_idx), batch_size=batch_size, shuffle=True)
-    val_loader = DataLoader(Subset(cifar10_val_full, val_idx), batch_size=batch_size, shuffle=False)
-    test_loader = DataLoader(cifar10_test, batch_size=batch_size, shuffle=False)
+    train_loader = DataLoader(Subset(cifar10_full, train_idx), batch_size=batch_size, shuffle=True, num_workers=2, pin_memory=True)
+    val_loader = DataLoader(Subset(cifar10_val_full, val_idx), batch_size=batch_size, shuffle=False, num_workers=2, pin_memory=True)
+    test_loader = DataLoader(cifar10_test, batch_size=batch_size, shuffle=False, num_workers=2, pin_memory=True)
 
     return train_loader, val_loader, test_loader
 
@@ -49,7 +49,7 @@ def get_cifar100_unknowns(batch_size):
     near_indices = [i for i, target in enumerate(cifar100_test.targets) if target in near_idx]
     far_indices = [i for i, target in enumerate(cifar100_test.targets) if target in far_idx]
 
-    near_loader = DataLoader(Subset(cifar100_test, near_indices), batch_size=batch_size, shuffle=False)
-    far_loader = DataLoader(Subset(cifar100_test, far_indices), batch_size=batch_size, shuffle=False)
+    near_loader = DataLoader(Subset(cifar100_test, near_indices), batch_size=batch_size, shuffle=False, num_workers=2, pin_memory=True)
+    far_loader = DataLoader(Subset(cifar100_test, far_indices), batch_size=batch_size, shuffle=False, num_workers=2, pin_memory=True)
 
     return near_loader, far_loader
