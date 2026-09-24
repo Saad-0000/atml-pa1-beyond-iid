@@ -24,8 +24,20 @@ def main():
     if cfg['method'] == 'proser':
         # Init from Vanilla[cite: 2]
         ckpt = torch.load('task4/results/vanilla_best.pth')
+        
+        # Extract the 10-class fc weights so they don't cause a shape mismatch
+        fc_w = ckpt.pop('fc.weight')
+        fc_b = ckpt.pop('fc.bias')
+        
+        # Load all the backbone (feature extractor) weights
         model.load_state_dict(ckpt, strict=False)
-        nn.init.xavier_uniform_(model.fc.weight[10:]) # Random init dummy classifiers[cite: 2]
+        
+        # Manually copy the 10 known class weights into the new 15-class layer
+        with torch.no_grad():
+            model.fc.weight[:10] = fc_w
+            model.fc.bias[:10] = fc_b
+            nn.init.xavier_uniform_(model.fc.weight[10:]) # Random init dummy classifiers[cite: 2]
+            nn.init.zeros_(model.fc.bias[10:])
         
     optimizer = torch.optim.SGD(
         model.parameters(), 
